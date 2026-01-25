@@ -1,0 +1,19 @@
+name: RomajiSwitcher
+version: 1.0.0
+main: com.github.waras.romajiswitcher.RomajiSwitcher
+description: A Paper plugin that converts romaji to Japanese in chat messages
+authors: [waras]
+api-version: 1.21
+
+commands:
+  romaji:
+    description: Toggle romaji conversion on/off
+    usage: /<command>
+
+permissions:
+  romajiswitcher.use:
+    description: Allows player to use romaji conversion
+    default: true
+  romajiswitcher.admin:
+    description: Allows admin to manage romaji conversion
+    default: op
