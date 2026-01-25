@@ -1,10 +1,9 @@
 package com.github.waras.romajiswitcher;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
- * Romaji to Japanese (Hiragana/Kanji) converter
+ * Romaji to Japanese (Hiragana/Kanji) converter with original text preservation
  * Complete support for:
  * - Hepburn (ヘボン式) and Kunrei (訓令式) romanization
  * - Sokuon (促音) - small tsu (っ)
@@ -12,7 +11,8 @@ import java.util.regex.Pattern;
  * - Small kana (小書き仮名) - lXX or xXX for all sounds
  * - Kanji conversion for common words (LunaChat inspired)
  * - Space handling: aiu eo -> あいう　えお (aiu eo)
- * Examples: eenala -> ええなぁ, arigatou -> 有難う, a i u e o -> あ い う え お
+ * - Format: Japanese(原文ローマ字)
+ * Examples: aiueo -> あいうえお(aiueo), arigatou -> 有難う(arigatou)
  */
 public class RomajiConverter {
 
@@ -287,20 +287,35 @@ public class RomajiConverter {
     }
 
     /**
-     * Convert a single romaji word to Japanese with kanji support
-     * Result format: 日本語(日本語) e.g., 有難う(有難う), あいうえお(あいうえお)
+     * Conversion result class for color support
      */
-    public static String convertWord(String romajiWord) {
+    public static class ConversionResult {
+        public String japanese;
+        public String original;
+        public String formatted;
+
+        public ConversionResult(String japanese, String original) {
+            this.japanese = japanese;
+            this.original = original;
+            this.formatted = japanese + "(" + original + ")";
+        }
+    }
+
+    /**
+     * Convert a single romaji word to Japanese with original text preservation
+     * Result: Japanese(原文ローマ字) e.g., 有難う(arigatou), あいうえお(aiueo)
+     */
+    public static ConversionResult convertWordWithResult(String romajiWord) {
         if (romajiWord == null || romajiWord.isEmpty()) {
-            return romajiWord;
+            return new ConversionResult(romajiWord, romajiWord);
         }
 
         String lower = romajiWord.toLowerCase();
         
-        // Check kanji map first (for common words)
+        // Check kanji map first
         if (KANJI_MAP.containsKey(lower)) {
             String kanji = KANJI_MAP.get(lower);
-            return kanji + "(" + kanji + ")";
+            return new ConversionResult(kanji, romajiWord);
         }
 
         StringBuilder japanese = new StringBuilder();
@@ -368,7 +383,15 @@ public class RomajiConverter {
             }
         }
 
-        return japanese.toString() + "(" + japanese.toString() + ")";
+        return new ConversionResult(japanese.toString(), romajiWord);
+    }
+
+    /**
+     * Backward compatibility: convert word and return formatted string
+     */
+    public static String convertWord(String romajiWord) {
+        ConversionResult result = convertWordWithResult(romajiWord);
+        return result.formatted;
     }
 
     private static boolean canMatch(String text) {
@@ -397,8 +420,8 @@ public class RomajiConverter {
     }
 
     /**
-     * Convert romaji text to Japanese, handling spaces properly
-     * Example: "a i u e o" -> "あ い う え お (あ い う え お)"
+     * Convert romaji text to Japanese with original text preservation
+     * Example: "aiueo" -> "あいうえお(aiueo)"
      */
     public static String convert(String text) {
         if (text == null || text.isEmpty()) {
@@ -407,15 +430,12 @@ public class RomajiConverter {
 
         StringBuilder result = new StringBuilder();
         StringBuilder currentWord = new StringBuilder();
-        StringBuilder originalWord = new StringBuilder();
 
         for (int i = 0; i < text.length(); i++) {
             char ch = text.charAt(i);
 
-            // Check if character is part of a romaji word
             if (Character.isLetter(ch) || ch == '-' || ch == '\'') {
                 currentWord.append(ch);
-                originalWord.append(ch);
             } else {
                 // Process accumulated word
                 if (currentWord.length() > 0) {
@@ -426,7 +446,6 @@ public class RomajiConverter {
                         result.append(word);
                     }
                     currentWord = new StringBuilder();
-                    originalWord = new StringBuilder();
                 }
                 // Keep the separator (including spaces)
                 result.append(ch);
