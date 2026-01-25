@@ -1,4 +1,5 @@
 # RomajiSwitcher-MCplugin
+<img width="645" height="368" alt="{02AB2A1A-374B-4B39-8F19-6789D662D8B3}" src="https://github.com/user-attachments/assets/3d2d0125-7c45-4c25-8db5-e119f6271c6c" />
 
 Paper Minecraft 1.21.6対応のローマ字自動日本語化プラグイン
 
