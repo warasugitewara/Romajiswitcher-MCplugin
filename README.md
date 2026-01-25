@@ -32,13 +32,16 @@ Paper Minecraft 1.21.6対応のローマ字自動日本語化プラグイン
 
 ### コマンド
 
-- `/romaji` - ローマ字変換の ON/OFF 切り替え（デフォルト: ON）
+- `/romaji` - ローマ字変換の ON/OFF トグル
+- `/romaji switch on|off` - ローマ字変換を有効/無効に設定
 - `/romaji color <color1> <color2>` - テキストの色をカスタマイズ
 - `/romaji dictionary add <romaji> <kanji>` - 辞書に単語を追加（管理者用）
 - `/romaji dictionary del <romaji>` - 辞書から単語を削除（管理者用）
 - `/romaji dictionary list [ページ]` - 辞書一覧を表示（ページネーション対応）
 
-**利用可能な色**: white, silver, gray, black, red, maroon, yellow, olive, lime, green, aqua, teal, blue, navy, fuchsia, purple
+**✨ タブ補完対応**: すべてのコマンドでタブキー補完が使用可能
+
+**利用可能な色**: black, dark_blue, dark_green, dark_aqua, dark_red, dark_purple, gold, gray, dark_gray, blue, green, aqua, red, light_purple, yellow, white
 
 ### コマンド例
 
