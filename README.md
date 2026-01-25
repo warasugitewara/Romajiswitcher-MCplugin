@@ -1,41 +1,43 @@
 # RomajiSwitcher-MCplugin
 
-A lightweight Paper Minecraft plugin (1.21.6+) that automatically converts romaji (Latin alphabet) to Japanese characters in chat messages.
+Paper Minecraft 1.21.6対応のローマ字自動日本語化プラグイン
 
-**Inspired by**: [LunaChat](https://github.com/ucchyocean/LunaChat) - Core romaji conversion logic adapted from their japanization system.
+チャットメッセージのローマ字（ラテン文字）を自動的に日本語に変換します。
 
-## Features
+**インスパイア元**: [LunaChat](https://github.com/ucchyocean/LunaChat) - 日本語化ロジックをベースに開発
 
-- 🔤 **Automatic Romaji-to-Japanese Conversion**: Converts latin characters to hiragana and common kanji
-- 💬 **Chat Integration**: Seamlessly converts player messages
-- 👤 **Per-Player Toggle**: Players can enable/disable conversion with `/romaji` (settings persist across server restarts)
-- 🎨 **Color Customization**: Players can customize the color of Japanese and romaji text with `/romaji color <color1> <color2>`
-- 🔧 **Comprehensive Romanization**: Full support for all Japanese romanization styles including:
-  - Sokuon (促音): `kitte` → `きって`
-  - Small kana (小書き仮名): `lya` → `ゃ`, `xyo` → `ょ`
-  - N particle: `san` → `さん`, `n` → `ん`
-  - Long vowels: `ou` → `おう`, `ei` → `えい`
-- ⚡ **Lightweight**: Minimal performance impact
-- 🤝 **Plugin Compatible**: Works with Translator series and EssentialsX Discord
-- 💾 **Persistent Storage**: Player settings are saved to JSON and restored on server restart
-- 🇯🇵 **Japanese Output**: Converts `aiueo` → `あいうえお(aiueo)`, `arigatou` → `有難う(arigatou)`
+## 機能
 
-## Installation
+- 🔤 **ローマ字自動変換**: ラテン文字をひらがなと常用漢字に自動変換
+- 💬 **チャット統合**: プレイヤーのメッセージを自動変換
+- 👤 **個人単位ON/OFF**: `/romaji` コマンドで有効/無効を切り替え可能（設定は永続化）
+- 🎨 **色カスタマイズ**: `/romaji color` コマンドで日本語とローマ字の色を個別指定
+- 🔧 **包括的なローマ字対応**:
+  - 促音（小さいつ）: `kitte` → `きって`
+  - 小書き仮名: `lya` → `ゃ`, `xyo` → `ょ`
+  - ん の智的判定: `san` → `さん`, `n` → `ん`
+  - 長音: `ou` → `おう`, `ei` → `えい`
+- ⚡ **軽量**: パフォーマンス負荷最小化
+- 🤝 **互換性**: Translator シリーズ、EssentialsX Discord に対応
+- 💾 **設定永続化**: プレイヤー設定はJSON保存（サーバー再起動後も保持）
+- 🇯🇵 **日本語出力**: `aiueo` → `あいうえお(aiueo)`, `arigatou` → `有難う(arigatou)`
 
-1. Download the latest JAR from [Releases](https://github.com/waras/Romajiswitcher-MCplugin/releases)
-2. Place it in your Paper server's `plugins` folder
-3. Restart the server
+## インストール
 
-## Usage
+1. [Releases](https://github.com/warasugitewara/Romajiswitcher-MCplugin/releases) から最新の JAR をダウンロード
+2. Paper サーバーの `plugins` フォルダに配置
+3. サーバーを再起動
 
-### Player Commands
+## 使い方
 
-- `/romaji` - Toggle romaji conversion on/off for yourself (default: ON)
-- `/romaji color <japanese_color> <romaji_color>` - Customize text colors
+### コマンド
 
-**Colors Available**: white, silver, gray, black, red, maroon, yellow, olive, lime, green, aqua, teal, blue, navy, fuchsia, purple
+- `/romaji` - ローマ字変換の ON/OFF 切り替え（デフォルト: ON）
+- `/romaji color <color1> <color2>` - テキストの色をカスタマイズ
 
-### Command Examples
+**利用可能な色**: white, silver, gray, black, red, maroon, yellow, olive, lime, green, aqua, teal, blue, navy, fuchsia, purple
+
+### コマンド例
 
 ```
 /romaji
@@ -48,35 +50,35 @@ A lightweight Paper Minecraft plugin (1.21.6+) that automatically converts romaj
   ローマ字色: gray
 ```
 
-### Output Format
+### 出力例
 
-The plugin converts messages while preserving the original romaji in parentheses for reference:
+プラグインはメッセージを変換し、元のローマ字を括弧内に保持します:
 
 ```
-Player Input:  waras: arigatou
-Server Output: waras: 有難う(arigatou)
+プレイヤー入力:  waras: arigatou
+サーバー出力: waras: 有難う(arigatou)
 ```
 
-### Example Conversions
+### 変換例
 
-| Input | Output |
-|-------|--------|
+| 入力 | 出力 |
+|------|------|
 | `aiueo` | `あいうえお(aiueo)` |
 | `arigatou` | `有難う(arigatou)` |
 | `konnichiwa` | `こんにちは(konnichiwa)` |
 | `oyasumi` | `お休み(oyasumi)` |
 | `sugoi` | `凄い(sugoi)` |
 
-## Permissions
+## パーミッション（権限）
 
-- `romajiswitcher.use` - Allow player to use romaji conversion (default: true)
-- `romajiswitcher.admin` - Admin permission (default: op)
+- `romajiswitcher.use` - ローマ字変換機能の使用（デフォルト: true）
+- `romajiswitcher.admin` - 管理者権限（デフォルト: op）
 
-## Configuration
+## 設定
 
-### Persistent User Settings
+### プレイヤー設定の永続化
 
-Player preferences are automatically saved to `plugins/RomajiSwitcher/user_settings.json`:
+プレイヤーの設定は `plugins/RomajiSwitcher/user_settings.json` に自動保存されます:
 
 ```json
 {
@@ -93,60 +95,59 @@ Player preferences are automatically saved to `plugins/RomajiSwitcher/user_setti
 }
 ```
 
-- `enabled` = Romaji conversion enabled/disabled
-- `japaneseColor` = Color for converted Japanese text (default: white)
-- `romajiColor` = Color for parenthesized romaji text (default: gray)
+- `enabled` - ローマ字変換の ON/OFF
+- `japaneseColor` - 日本語テキストの色（デフォルト: white）
+- `romajiColor` - 括弧内ローマ字の色（デフォルト: gray）
 
-Settings are loaded on server startup and saved whenever a player changes settings.
+## 互換性
 
-## Compatibility
-
-✅ **Compatible with**:
-- Translator series plugins
+✅ **対応プラグイン**:
+- Translator シリーズ
 - EssentialsX
 - EssentialsX Discord
-- Other chat-related plugins that use Bukkit chat events
+- その他のチャット関連プラグイン
 
-**Note**: RomajiSwitcher uses a normal event priority (not highest or lowest), ensuring it works well alongside other plugins.
+**注記**: RomajiSwitcher は通常優先度で実行されるため、他のプラグインとの競合が少なくなります。
 
-## Building
+## サポートしているローマ字
 
-Requirements:
-- Java 21+
+### ひらがな変換
+- **単母音**: a, i, u, e, o
+- **子音**: k, g, s, z, t, d, n, h, b, p, m, y, r, w
+- **拗音**: kya, sha, cha, nya, hya など
+- **小書き仮名**: lya/xya → ゃ, lyu/xyu → ゅ, lyo/xyo → ょ, la/xa → ぁ など
+- **特殊処理**:
+  - 促音（小さいつ）: `kitte` → `きって`, `matte` → `まって`
+  - ん の処理: `san` → `さん`, `n` （単独）→ `ん`, `nn` → `ん`
+  - 長音: `ou` → `おう`, `ei` → `えい`
+
+### 漢字変換
+約70個の常用単語に対応:
+- **挨拶**: `konnichiwa` → `こんにちは`, `arigatou` → `有難う`
+- **学校**: `gakkou` → `学校`, `sensei` → `先生`
+- **家族**: `otousan` → `お父さん`, `okaasan` → `お母さん`
+- **動詞**: `taberu` → `食べる`, `yomu` → `読む`
+- **形容詞**: `sugoi` → `凄い`, `kawaii` → `可愛い`
+
+辞書は `src/main/resources/kanji_dictionary.txt` で拡張可能です。
+
+## ビルド
+
+要件:
+- Java 21 以上
 - Maven
 
 ```bash
 mvn clean package
 ```
 
-Output JAR will be in `target/RomajiSwitcher-1.0.0.jar`
+出力 JAR は `target/RomajiSwitcher-1.0.0.jar` に生成されます。
 
-## Supported Romanization
-
-### Hiragana Conversion
-- **Vowels**: a, i, u, e, o
-- **Consonants**: k, g, s, z, t, d, n, h, b, p, m, y, r, w
-- **Combined Sounds**: kya, sha, cha, nya, hya, etc.
-- **Small Kana**: lya/xya → ゃ, lyu/xyu → ゅ, lyo/xyo → ょ, la/xa → ぁ, etc.
-- **Special Handling**:
-  - Sokuon (促音): `kitte` → `きって`, `matte` → `まって`
-  - N particle: `san` → `さん`, `n` (standalone) → `ん`, `nn` → `ん`
-  - Long vowels: `ou` → `おう`, `ei` → `えい`
-
-### Kanji Conversion
-Supports ~70 common Japanese words including:
-- Greetings: `konnichiwa` → `こんにちは`, `arigatou` → `有難う`
-- School: `gakkou` → `学校`, `sensei` → `先生`
-- Family: `otousan` → `お父さん`, `okaasan` → `お母さん`
-- Verbs: `taberu` → `食べる`, `yomu` → `読む`
-- Adjectives: `sugoi` → `凄い`, `kawaii` → `可愛い`
-
-Extended dictionary can be modified in `src/main/resources/kanji_dictionary.txt`
-
-## License
+## ライセンス
 
 MIT License
 
-## Credits
+## クレジット
 
-Inspired by and adapted from [LunaChat](https://github.com/ucchyocean/LunaChat) by ucchyocean
+[LunaChat](https://github.com/ucchyocean/LunaChat) by ucchyocean からインスパイアされ、開発されました。
+
