@@ -22,7 +22,9 @@ public class RomajiSwitcher extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ChatListener(preferences), this);
 
         // Register commands
-        getCommand("romaji").setExecutor(new RomajiCommand(preferences));
+        RomajiCommand romajiCommand = new RomajiCommand(preferences);
+        getCommand("romaji").setExecutor(romajiCommand);
+        getCommand("romaji").setTabCompleter(new RomajiTabCompleter());
 
         getLogger().info("§aRomajiSwitcher enabled!");
         getLogger().info("§eUse /romaji to toggle romaji conversion");

@@ -54,6 +54,10 @@ public class RomajiCommand implements CommandExecutor {
             return true;
         }
 
+        if (args.length >= 1 && args[0].equalsIgnoreCase("switch")) {
+            return handleSwitchCommand(player, args);
+        }
+
         if (args.length >= 1 && args[0].equalsIgnoreCase("color")) {
             return handleColorCommand(player, args);
         }
@@ -65,12 +69,38 @@ public class RomajiCommand implements CommandExecutor {
         // Unknown sub-command
         player.sendMessage("§c未知のサブコマンド: " + args[0]);
         player.sendMessage("§7使用方法:");
-        player.sendMessage("§e  /romaji - 変換ON/OFF");
+        player.sendMessage("§e  /romaji - 変換ON/OFF トグル");
+        player.sendMessage("§e  /romaji switch on|off - 変換を有効/無効に設定");
         player.sendMessage("§e  /romaji color <色1> <色2> - 色設定");
         player.sendMessage("§e  /romaji dictionary add <ローマ字> <漢字> - 辞書に追加");
         player.sendMessage("§e  /romaji dictionary del <ローマ字> - 辞書から削除");
         player.sendMessage("§e  /romaji dictionary list [ページ] - 辞書一覧");
         return true;
+    }
+
+    private boolean handleSwitchCommand(Player player, String[] args) {
+        if (args.length < 2) {
+            player.sendMessage("§c使用方法: /romaji switch on|off");
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+
+        if (action.equals("on")) {
+            preferences.setEnabled(player.getUniqueId(), true);
+            player.sendMessage("§a✔ ローマ字変換が有効になりました");
+            player.sendMessage("§7メッセージがローマ字から日本語に変換されます");
+            return true;
+        } else if (action.equals("off")) {
+            preferences.setEnabled(player.getUniqueId(), false);
+            player.sendMessage("§c✘ ローマ字変換が無効になりました");
+            player.sendMessage("§7メッセージは変換されなくなります");
+            return true;
+        } else {
+            player.sendMessage("§c不明なオプション: " + action);
+            player.sendMessage("§7使用方法: /romaji switch on|off");
+            return true;
+        }
     }
 
     private boolean handleColorCommand(Player player, String[] args) {

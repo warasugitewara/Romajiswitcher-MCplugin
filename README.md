@@ -34,6 +34,9 @@ Paper Minecraft 1.21.6対応のローマ字自動日本語化プラグイン
 
 - `/romaji` - ローマ字変換の ON/OFF 切り替え（デフォルト: ON）
 - `/romaji color <color1> <color2>` - テキストの色をカスタマイズ
+- `/romaji dictionary add <romaji> <kanji>` - 辞書に単語を追加（管理者用）
+- `/romaji dictionary del <romaji>` - 辞書から単語を削除（管理者用）
+- `/romaji dictionary list [ページ]` - 辞書一覧を表示（ページネーション対応）
 
 **利用可能な色**: white, silver, gray, black, red, maroon, yellow, olive, lime, green, aqua, teal, blue, navy, fuchsia, purple
 
@@ -41,13 +44,24 @@ Paper Minecraft 1.21.6対応のローマ字自動日本語化プラグイン
 
 ```
 /romaji
-→ ✔ Romaji conversion is now enabled!
-  Your messages will be converted from romaji to Japanese.
+→ ✔ ローマ字変換が有効になりました
+  メッセージがローマ字から日本語に変換されます
 
 /romaji color white gray
-→ ✔ Color preferences updated!
+→ ✔ 色設定が更新されました
   日本語色: white
   ローマ字色: gray
+
+/romaji dictionary add bokoku 母国
+→ ✔ 辞書に追加しました
+  bokoku → 母国
+
+/romaji dictionary list
+→ ========== 辞書一覧 (1/10) ==========
+  arigatou → 有難う
+  domo → どうも
+  ...
+  =====================================
 ```
 
 ### 出力例
@@ -117,19 +131,21 @@ Paper Minecraft 1.21.6対応のローマ字自動日本語化プラグイン
 - **拗音**: kya, sha, cha, nya, hya など
 - **小書き仮名**: lya/xya → ゃ, lyu/xyu → ゅ, lyo/xyo → ょ, la/xa → ぁ など
 - **特殊処理**:
-  - 促音（小さいつ）: `kitte` → `きって`, `matte` → `まって`
+  - 促音（小さいつ）: `kitte` → `きって`, `matte` → `まって`, `xtu` → `っ`
   - ん の処理: `san` → `さん`, `n` （単独）→ `ん`, `nn` → `ん`
+  - じゅ の処理: `ju` → `じゅ`, `zyu` → `じゅ`, `jyu` → `じゅ`
   - 長音: `ou` → `おう`, `ei` → `えい`
 
 ### 漢字変換
-約70個の常用単語に対応:
+100+ 個の常用単語に対応:
 - **挨拶**: `konnichiwa` → `こんにちは`, `arigatou` → `有難う`
 - **学校**: `gakkou` → `学校`, `sensei` → `先生`
 - **家族**: `otousan` → `お父さん`, `okaasan` → `お母さん`
 - **動詞**: `taberu` → `食べる`, `yomu` → `読む`
 - **形容詞**: `sugoi` → `凄い`, `kawaii` → `可愛い`
+- **その他**: `bokoku` → `母国`, `kaisha` → `会社` など
 
-辞書は `src/main/resources/kanji_dictionary.txt` で拡張可能です。
+**カスタム辞書**: `/romaji dictionary add` コマンドでいつでも新しい単語を追加可能
 
 ## ビルド
 
