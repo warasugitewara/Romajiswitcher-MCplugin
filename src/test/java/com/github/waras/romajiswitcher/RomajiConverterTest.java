@@ -7,44 +7,48 @@ public class RomajiConverterTest {
 
     @Test
     public void testBasicConversion() {
-        String result = RomajiConverter.convert("aiueo");
-        // Output to debug
-        System.err.println("Test result for 'aiueo': " + result);
+        RomajiConverter.ConversionResult result = RomajiConverter.convert("aiueo");
         assertNotNull(result);
-        assertFalse(result.isEmpty());
+        assertFalse(result.japanese.isEmpty());
+        assertEquals("あいうえお(aiueo)", result.getFormattedText());
     }
 
     @Test
     public void testSingleA() {
-        String result = RomajiConverter.convert("a");
+        RomajiConverter.ConversionResult result = RomajiConverter.convert("a");
         assertNotNull(result);
-        assertTrue(result.contains("あ"));
+        assertTrue(result.japanese.contains("あ"));
     }
 
     @Test
     public void testKonnichiwa() {
-        String result = RomajiConverter.convert("konnichiwa");
+        RomajiConverter.ConversionResult result = RomajiConverter.convert("konnichiwa");
         assertNotNull(result);
-        assertNotEquals("", result);
-    }
-
-    @Test
-    public void testContainsRomaji() {
-        assertTrue(RomajiConverter.containsRomaji("aiueo"));
-        assertTrue(RomajiConverter.containsRomaji("a"));
+        assertFalse(result.japanese.isEmpty());
     }
 
     @Test
     public void testEmptyString() {
-        String result = RomajiConverter.convert("");
-        assertEquals("", result);
+        RomajiConverter.ConversionResult result = RomajiConverter.convert("");
+        assertEquals("", result.japanese);
     }
 
     @Test
     public void testMixedText() {
-        String result = RomajiConverter.convert("hello world");
+        RomajiConverter.ConversionResult result = RomajiConverter.convert("hello world");
         assertNotNull(result);
     }
-}
 
+    @Test
+    public void testNParticle() {
+        RomajiConverter.ConversionResult result = RomajiConverter.convertWord("san");
+        assertEquals("さん", result.japanese);
+    }
+
+    @Test
+    public void testStandaloneN() {
+        RomajiConverter.ConversionResult result = RomajiConverter.convertWord("n");
+        assertEquals("ん", result.japanese);
+    }
+}
 

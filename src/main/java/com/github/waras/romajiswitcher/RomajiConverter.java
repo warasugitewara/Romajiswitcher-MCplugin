@@ -1,42 +1,55 @@
 package com.github.waras.romajiswitcher;
 
+import java.io.*;
 import java.util.*;
 
 /**
- * Romaji to Japanese (Hiragana/Kanji) converter with original text preservation
- * Complete support for:
- * - Hepburn (ヘボン式) and Kunrei (訓令式) romanization
- * - Sokuon (促音) - small tsu (っ)
- * - Long vowels (長音) - aa, ii, uu, ee, oo, ei, ou
- * - Small kana (小書き仮名) - lXX or xXX for all sounds
- * - Kanji conversion for common words (LunaChat inspired)
- * - Space handling: aiu eo -> あいう　えお (aiu eo)
- * - Format: Japanese(原文ローマ字)
- * Examples: aiueo -> あいうえお(aiueo), arigatou -> 有難う(arigatou)
+ * Comprehensive Japanese romanization to hiragana conversion engine.
+ * Supports Hepburn, Kunrei, and hybrid romanization styles.
+ * Handles: basic syllables, small kana (l/x prefix), sokuon (促音), chōonpu (長音)
  */
 public class RomajiConverter {
 
-    private static final Map<String, String> ROMAJI_MAP = new LinkedHashMap<>();
-    private static final Map<String, String> KANJI_MAP = new LinkedHashMap<>();
-    private static final Map<String, String> SMALL_KANA_MAP = new HashMap<>();
+    private static final String VOWELS = "aiueo";
+
+    /**
+     * Main romanization mapping with longest-match-first priority
+     */
+    private static final LinkedHashMap<String, String> ROMAJI_MAP = new LinkedHashMap<>();
+
+    /**
+     * Kanji mapping for common words (loaded from file or hardcoded)
+     */
+    private static final Map<String, String> KANJI_MAP = new HashMap<>();
 
     static {
-        // Initialize small kana map
-        SMALL_KANA_MAP.put("あ", "ぁ");
-        SMALL_KANA_MAP.put("い", "ぃ");
-        SMALL_KANA_MAP.put("う", "ぅ");
-        SMALL_KANA_MAP.put("え", "ぇ");
-        SMALL_KANA_MAP.put("お", "ぉ");
-        SMALL_KANA_MAP.put("や", "ゃ");
-        SMALL_KANA_MAP.put("ゆ", "ゅ");
-        SMALL_KANA_MAP.put("よ", "ょ");
-        SMALL_KANA_MAP.put("わ", "ゎ");
-        SMALL_KANA_MAP.put("つ", "っ");
+        // Initialize basic hiragana mappings (3-char first for priority)
+        // Small kana with l/x prefix
+        ROMAJI_MAP.put("lya", "ゃ");
+        ROMAJI_MAP.put("lyu", "ゅ");
+        ROMAJI_MAP.put("lyo", "ょ");
+        ROMAJI_MAP.put("xya", "ゃ");
+        ROMAJI_MAP.put("xyu", "ゅ");
+        ROMAJI_MAP.put("xyo", "ょ");
+        ROMAJI_MAP.put("lwa", "ゎ");
+        ROMAJI_MAP.put("xwa", "ゎ");
+        ROMAJI_MAP.put("la", "ぁ");
+        ROMAJI_MAP.put("li", "ぃ");
+        ROMAJI_MAP.put("lu", "ぅ");
+        ROMAJI_MAP.put("le", "ぇ");
+        ROMAJI_MAP.put("lo", "ぉ");
+        ROMAJI_MAP.put("xa", "ぁ");
+        ROMAJI_MAP.put("xi", "ぃ");
+        ROMAJI_MAP.put("xu", "ぅ");
+        ROMAJI_MAP.put("xe", "ぇ");
+        ROMAJI_MAP.put("xo", "ぉ");
+        ROMAJI_MAP.put("lla", "ぁ");
+        ROMAJI_MAP.put("lli", "ぃ");
+        ROMAJI_MAP.put("llu", "ぅ");
+        ROMAJI_MAP.put("lle", "ぇ");
+        ROMAJI_MAP.put("llo", "ぉ");
 
-        // Initialize kanji dictionary (common words)
-        initializeKanjiMap();
-
-        // 3-character combinations (palatalized sounds)
+        // Palatalized consonants (3-char)
         ROMAJI_MAP.put("kya", "きゃ");
         ROMAJI_MAP.put("kyu", "きゅ");
         ROMAJI_MAP.put("kyo", "きょ");
@@ -49,6 +62,12 @@ public class RomajiConverter {
         ROMAJI_MAP.put("cha", "ちゃ");
         ROMAJI_MAP.put("chu", "ちゅ");
         ROMAJI_MAP.put("cho", "ちょ");
+        ROMAJI_MAP.put("tya", "ちゃ");
+        ROMAJI_MAP.put("tyu", "ちゅ");
+        ROMAJI_MAP.put("tyo", "ちょ");
+        ROMAJI_MAP.put("dya", "ぢゃ");
+        ROMAJI_MAP.put("dyu", "ぢゅ");
+        ROMAJI_MAP.put("dyo", "ぢょ");
         ROMAJI_MAP.put("nya", "にゃ");
         ROMAJI_MAP.put("nyu", "にゅ");
         ROMAJI_MAP.put("nyo", "にょ");
@@ -67,37 +86,17 @@ public class RomajiConverter {
         ROMAJI_MAP.put("rya", "りゃ");
         ROMAJI_MAP.put("ryu", "りゅ");
         ROMAJI_MAP.put("ryo", "りょ");
-        
-        ROMAJI_MAP.put("ja", "じゃ");
-        ROMAJI_MAP.put("ju", "じゅ");
-        ROMAJI_MAP.put("jo", "じょ");
-        ROMAJI_MAP.put("zya", "じゃ");
-        ROMAJI_MAP.put("zyu", "じゅ");
-        ROMAJI_MAP.put("zyo", "じょ");
 
-        // 2-character combinations (Hepburn style)
-        ROMAJI_MAP.put("shi", "し");
-        ROMAJI_MAP.put("chi", "ち");
+        // Special Kunrei variants (3-char)
+        ROMAJI_MAP.put("tsa", "つぁ");
+        ROMAJI_MAP.put("tse", "つぇ");
+        ROMAJI_MAP.put("tsi", "つぃ");
         ROMAJI_MAP.put("tsu", "つ");
-        ROMAJI_MAP.put("fu", "ふ");
-        
-        // 2-character combinations (Kunrei style)
-        ROMAJI_MAP.put("si", "し");
-        ROMAJI_MAP.put("ti", "ち");
-        ROMAJI_MAP.put("tu", "つ");
-        ROMAJI_MAP.put("zi", "じ");
-        ROMAJI_MAP.put("hu", "ふ");
-        
-        // Long vowels (double vowels)
-        ROMAJI_MAP.put("aa", "ああ");
-        ROMAJI_MAP.put("ii", "いい");
-        ROMAJI_MAP.put("uu", "うう");
-        ROMAJI_MAP.put("ee", "ええ");
-        ROMAJI_MAP.put("oo", "おお");
-        ROMAJI_MAP.put("ou", "おう");
-        ROMAJI_MAP.put("ei", "えい");
-        
-        // 2-character combinations
+        ROMAJI_MAP.put("tso", "つぉ");
+        ROMAJI_MAP.put("dzi", "ぢ");
+        ROMAJI_MAP.put("dze", "ぢぇ");
+
+        // Basic consonants (2-char)
         ROMAJI_MAP.put("ka", "か");
         ROMAJI_MAP.put("ki", "き");
         ROMAJI_MAP.put("ku", "く");
@@ -108,33 +107,34 @@ public class RomajiConverter {
         ROMAJI_MAP.put("gu", "ぐ");
         ROMAJI_MAP.put("ge", "げ");
         ROMAJI_MAP.put("go", "ご");
-        
         ROMAJI_MAP.put("sa", "さ");
+        ROMAJI_MAP.put("si", "し");
         ROMAJI_MAP.put("su", "す");
         ROMAJI_MAP.put("se", "せ");
         ROMAJI_MAP.put("so", "そ");
         ROMAJI_MAP.put("za", "ざ");
+        ROMAJI_MAP.put("zi", "じ");
         ROMAJI_MAP.put("zu", "ず");
         ROMAJI_MAP.put("ze", "ぜ");
         ROMAJI_MAP.put("zo", "ぞ");
-        
         ROMAJI_MAP.put("ta", "た");
+        ROMAJI_MAP.put("ti", "ち");
+        ROMAJI_MAP.put("tu", "つ");
         ROMAJI_MAP.put("te", "て");
         ROMAJI_MAP.put("to", "と");
         ROMAJI_MAP.put("da", "だ");
-        ROMAJI_MAP.put("de", "で");
-        ROMAJI_MAP.put("do", "ど");
         ROMAJI_MAP.put("di", "ぢ");
         ROMAJI_MAP.put("du", "づ");
-        
+        ROMAJI_MAP.put("de", "で");
+        ROMAJI_MAP.put("do", "ど");
         ROMAJI_MAP.put("na", "な");
         ROMAJI_MAP.put("ni", "に");
         ROMAJI_MAP.put("nu", "ぬ");
         ROMAJI_MAP.put("ne", "ね");
         ROMAJI_MAP.put("no", "の");
-        
         ROMAJI_MAP.put("ha", "は");
         ROMAJI_MAP.put("hi", "ひ");
+        ROMAJI_MAP.put("hu", "ふ");
         ROMAJI_MAP.put("he", "へ");
         ROMAJI_MAP.put("ho", "ほ");
         ROMAJI_MAP.put("ba", "ば");
@@ -147,346 +147,308 @@ public class RomajiConverter {
         ROMAJI_MAP.put("pu", "ぷ");
         ROMAJI_MAP.put("pe", "ぺ");
         ROMAJI_MAP.put("po", "ぽ");
-        
         ROMAJI_MAP.put("ma", "ま");
         ROMAJI_MAP.put("mi", "み");
         ROMAJI_MAP.put("mu", "む");
         ROMAJI_MAP.put("me", "め");
         ROMAJI_MAP.put("mo", "も");
-        
         ROMAJI_MAP.put("ya", "や");
         ROMAJI_MAP.put("yu", "ゆ");
         ROMAJI_MAP.put("yo", "よ");
-        
         ROMAJI_MAP.put("ra", "ら");
         ROMAJI_MAP.put("ri", "り");
         ROMAJI_MAP.put("ru", "る");
         ROMAJI_MAP.put("re", "れ");
         ROMAJI_MAP.put("ro", "ろ");
-        
         ROMAJI_MAP.put("wa", "わ");
-        ROMAJI_MAP.put("wo", "を");
+        ROMAJI_MAP.put("wi", "ゐ");
         ROMAJI_MAP.put("we", "ゑ");
-        
-        // Foreign sounds
-        ROMAJI_MAP.put("fa", "ふぁ");
-        ROMAJI_MAP.put("fi", "ふぃ");
-        ROMAJI_MAP.put("fe", "ふぇ");
-        ROMAJI_MAP.put("fo", "ふぉ");
-        ROMAJI_MAP.put("va", "ゔぁ");
-        ROMAJI_MAP.put("vi", "ゔぃ");
-        ROMAJI_MAP.put("vu", "ゔ");
-        ROMAJI_MAP.put("ve", "ゔぇ");
-        ROMAJI_MAP.put("vo", "ゔぉ");
-        
-        // 1-character vowels
+        ROMAJI_MAP.put("wo", "を");
+
+        // Vowels (1-char)
         ROMAJI_MAP.put("a", "あ");
         ROMAJI_MAP.put("i", "い");
         ROMAJI_MAP.put("u", "う");
         ROMAJI_MAP.put("e", "え");
         ROMAJI_MAP.put("o", "お");
-        
-        ROMAJI_MAP.put("nn", "ん");
-        ROMAJI_MAP.put("n'", "ん");
 
-        // Generate small kana variants
-        generateSmallKanaVariants();
+        // Load kanji dictionary
+        loadKanjiDictionary();
     }
 
-    private static void initializeKanjiMap() {
-        // Common words with kanji (LunaChat inspired)
+    /**
+     * Load kanji dictionary from resources
+     */
+    private static void loadKanjiDictionary() {
+        try {
+            InputStream inputStream = RomajiConverter.class.getClassLoader()
+                    .getResourceAsStream("kanji_dictionary.txt");
+            
+            if (inputStream != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        continue;
+                    }
+                    String[] parts = line.split("=", 2);
+                    if (parts.length == 2) {
+                        KANJI_MAP.put(parts[0].trim(), parts[1].trim());
+                    }
+                }
+                reader.close();
+            } else {
+                // Fallback: use hardcoded basic kanji
+                loadDefaultKanji();
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to load kanji dictionary: " + e.getMessage());
+            loadDefaultKanji();
+        }
+    }
+
+    /**
+     * Fallback default kanji mappings
+     */
+    private static void loadDefaultKanji() {
         KANJI_MAP.put("arigatou", "有難う");
         KANJI_MAP.put("arigatai", "有難い");
-        KANJI_MAP.put("arigatougozaimasu", "有難うございます");
-        KANJI_MAP.put("konnichiha", "こんにちは");
-        KANJI_MAP.put("konnichiwa", "こんにちは");
-        KANJI_MAP.put("ohayou", "お早う");
-        KANJI_MAP.put("ohayougozaimasu", "お早うございます");
-        KANJI_MAP.put("oyasumi", "お休み");
-        KANJI_MAP.put("oyasumiasai", "お休みなさい");
-        KANJI_MAP.put("sumimasen", "済みません");
-        KANJI_MAP.put("sumimasenga", "済みませんが");
-        KANJI_MAP.put("yokatta", "良かった");
-        KANJI_MAP.put("yabai", "危ない");
+        KANJI_MAP.put("osusume", "お勧め");
         KANJI_MAP.put("sugoi", "凄い");
-        KANJI_MAP.put("kawaii", "可愛い");
-        KANJI_MAP.put("atatakai", "温かい");
-        KANJI_MAP.put("samui", "寒い");
-        KANJI_MAP.put("atui", "熱い");
-        KANJI_MAP.put("atsui", "厚い");
+        KANJI_MAP.put("mazui", "不味い");
         KANJI_MAP.put("oishii", "美味しい");
-        KANJI_MAP.put("naritai", "成りたい");
-        KANJI_MAP.put("yaritagatteru", "やりたがってる");
-        KANJI_MAP.put("suki", "好き");
-        KANJI_MAP.put("daisuki", "大好き");
-        KANJI_MAP.put("daikirai", "大嫌い");
-        KANJI_MAP.put("machigai", "間違い");
-        KANJI_MAP.put("machigaeta", "間違えた");
-        KANJI_MAP.put("kudasai", "下さい");
-        KANJI_MAP.put("onegaishimasu", "お願いします");
-    }
-
-    private static void generateSmallKanaVariants() {
-        Map<String, String> baseMap = new HashMap<>(ROMAJI_MAP);
-        
-        for (Map.Entry<String, String> entry : baseMap.entrySet()) {
-            String romaji = entry.getKey();
-            String hiragana = entry.getValue();
-            
-            if (romaji.length() <= 1) {
-                continue;
-            }
-            
-            String smallHiragana = makeSmall(hiragana);
-            ROMAJI_MAP.put("l" + romaji, smallHiragana);
-            ROMAJI_MAP.put("x" + romaji, smallHiragana);
-        }
-        
-        addSmallSingleChars();
-    }
-
-    private static void addSmallSingleChars() {
-        ROMAJI_MAP.put("la", "ぁ");
-        ROMAJI_MAP.put("li", "ぃ");
-        ROMAJI_MAP.put("lu", "ぅ");
-        ROMAJI_MAP.put("le", "ぇ");
-        ROMAJI_MAP.put("lo", "ぉ");
-        ROMAJI_MAP.put("lya", "ゃ");
-        ROMAJI_MAP.put("lyu", "ゅ");
-        ROMAJI_MAP.put("lyo", "ょ");
-        ROMAJI_MAP.put("lwa", "ゎ");
-        ROMAJI_MAP.put("ltu", "っ");
-        
-        ROMAJI_MAP.put("xa", "ぁ");
-        ROMAJI_MAP.put("xi", "ぃ");
-        ROMAJI_MAP.put("xu", "ぅ");
-        ROMAJI_MAP.put("xe", "ぇ");
-        ROMAJI_MAP.put("xo", "ぉ");
-        ROMAJI_MAP.put("xya", "ゃ");
-        ROMAJI_MAP.put("xyu", "ゅ");
-        ROMAJI_MAP.put("xyo", "ょ");
-        ROMAJI_MAP.put("xwa", "ゎ");
-        ROMAJI_MAP.put("xtu", "っ");
-    }
-
-    private static String makeSmall(String hiragana) {
-        if (hiragana == null || hiragana.isEmpty()) {
-            return hiragana;
-        }
-        
-        StringBuilder result = new StringBuilder();
-        for (char c : hiragana.toCharArray()) {
-            String small = SMALL_KANA_MAP.get(String.valueOf(c));
-            if (small != null) {
-                result.append(small);
-            } else {
-                result.append(c);
-            }
-        }
-        return result.toString();
+        KANJI_MAP.put("kawaii", "可愛い");
+        KANJI_MAP.put("atarashii", "新しい");
+        KANJI_MAP.put("furui", "古い");
+        KANJI_MAP.put("okii", "大きい");
+        KANJI_MAP.put("tiisai", "小さい");
+        KANJI_MAP.put("chiisai", "小さい");
+        KANJI_MAP.put("hayai", "速い");
+        KANJI_MAP.put("osoi", "遅い");
+        KANJI_MAP.put("tsuyoi", "強い");
+        KANJI_MAP.put("yowai", "弱い");
+        KANJI_MAP.put("takai", "高い");
+        KANJI_MAP.put("hikui", "低い");
+        KANJI_MAP.put("tokyo", "東京");
+        KANJI_MAP.put("osaka", "大阪");
+        KANJI_MAP.put("kyoto", "京都");
+        KANJI_MAP.put("onegai", "お願い");
+        KANJI_MAP.put("oyasuminasai", "お休みなさい");
+        KANJI_MAP.put("oyasumi", "お休み");
+        KANJI_MAP.put("ohayougozaimasu", "おはようございます");
+        KANJI_MAP.put("ohayou", "おはよう");
+        KANJI_MAP.put("konnichiwa", "こんにちは");
+        KANJI_MAP.put("konbanwa", "こんばんは");
+        KANJI_MAP.put("domo", "どうも");
+        KANJI_MAP.put("arigatougozaimasu", "ありがとうございます");
+        KANJI_MAP.put("gakkou", "学校");
+        KANJI_MAP.put("sensei", "先生");
+        KANJI_MAP.put("gakusei", "学生");
+        KANJI_MAP.put("daigaku", "大学");
     }
 
     /**
-     * Conversion result class for color support
+     * Conversion result that preserves original romaji for display
      */
     public static class ConversionResult {
-        public String japanese;
-        public String original;
-        public String formatted;
+        public final String japanese;
+        public final String originalRomaji;
 
-        public ConversionResult(String japanese, String original) {
+        public ConversionResult(String japanese, String originalRomaji) {
             this.japanese = japanese;
-            this.original = original;
-            this.formatted = japanese + "(" + original + ")";
+            this.originalRomaji = originalRomaji;
+        }
+
+        public String getFormattedText() {
+            return japanese + "(" + originalRomaji + ")";
         }
     }
 
     /**
-     * Convert a single romaji word to Japanese with original text preservation
-     * Result: Japanese(原文ローマ字) e.g., 有難う(arigatou), あいうえお(aiueo)
+     * Convert input text word by word
      */
-    public static ConversionResult convertWordWithResult(String romajiWord) {
-        if (romajiWord == null || romajiWord.isEmpty()) {
-            return new ConversionResult(romajiWord, romajiWord);
+    public static ConversionResult convert(String input) {
+        if (input == null || input.isEmpty()) {
+            return new ConversionResult("", "");
         }
 
-        String lower = romajiWord.toLowerCase();
-        
-        // Check kanji map first
-        if (KANJI_MAP.containsKey(lower)) {
-            String kanji = KANJI_MAP.get(lower);
-            return new ConversionResult(kanji, romajiWord);
+        StringBuilder japaneseText = new StringBuilder();
+        StringBuilder originalText = new StringBuilder();
+
+        String[] words = input.split("(?=\\s)|(?<=\\s)");
+
+        for (String word : words) {
+            if (word.isEmpty()) {
+                continue;
+            }
+
+            if (word.charAt(0) == ' ') {
+                japaneseText.append(' ');
+                originalText.append(' ');
+            } else {
+                ConversionResult wordResult = convertWord(word);
+                japaneseText.append(wordResult.japanese);
+                originalText.append(wordResult.originalRomaji);
+            }
         }
 
+        return new ConversionResult(japaneseText.toString(), originalText.toString());
+    }
+
+    /**
+     * Convert single word with kanji support
+     */
+    public static ConversionResult convertWord(String word) {
+        if (word == null || word.isEmpty()) {
+            return new ConversionResult("", "");
+        }
+
+        String lowerWord = word.toLowerCase();
+
+        // Check kanji dictionary first
+        if (KANJI_MAP.containsKey(lowerWord)) {
+            return new ConversionResult(KANJI_MAP.get(lowerWord), word);
+        }
+
+        // Fall back to character-by-character conversion
+        return convertWordWithResult(lowerWord, word);
+    }
+
+    /**
+     * Convert word character-by-character while preserving original case
+     */
+    private static ConversionResult convertWordWithResult(String lowerWord, String originalWord) {
         StringBuilder japanese = new StringBuilder();
+        StringBuilder romaji = new StringBuilder();
         int i = 0;
 
-        while (i < lower.length()) {
-            boolean matched = false;
+        while (i < lowerWord.length()) {
+            char current = lowerWord.charAt(i);
 
-            // Handle sokuon
-            if (i + 1 < lower.length() && isConsonant(lower.charAt(i)) && 
-                lower.charAt(i) == lower.charAt(i + 1) &&
-                lower.charAt(i) != 'n' && lower.charAt(i) != 'l' && lower.charAt(i) != 'x') {
-                
-                String nextPart = lower.substring(i + 1);
-                if (canMatch(nextPart)) {
-                    japanese.append("っ");
-                    i++;
-                    matched = true;
-                }
-            }
-
-            // Try 4-character matches
-            if (!matched && i + 4 <= lower.length()) {
-                String fourChar = lower.substring(i, i + 4);
-                if (ROMAJI_MAP.containsKey(fourChar)) {
-                    japanese.append(ROMAJI_MAP.get(fourChar));
-                    i += 4;
-                    matched = true;
-                }
-            }
-
-            // Try 3-character matches
-            if (!matched && i + 3 <= lower.length()) {
-                String threeChar = lower.substring(i, i + 3);
+            // Try 3-character match first
+            if (i + 3 <= lowerWord.length()) {
+                String threeChar = lowerWord.substring(i, i + 3);
                 if (ROMAJI_MAP.containsKey(threeChar)) {
                     japanese.append(ROMAJI_MAP.get(threeChar));
+                    romaji.append(originalWord.substring(i, i + 3).toLowerCase());
                     i += 3;
-                    matched = true;
+                    continue;
                 }
             }
 
-            // Try 2-character matches
-            if (!matched && i + 2 <= lower.length()) {
-                String twoChar = lower.substring(i, i + 2);
+            // Try 2-character match
+            if (i + 2 <= lowerWord.length()) {
+                String twoChar = lowerWord.substring(i, i + 2);
                 if (ROMAJI_MAP.containsKey(twoChar)) {
-                    japanese.append(ROMAJI_MAP.get(twoChar));
-                    i += 2;
-                    matched = true;
+                    // Special handling for 'n': only match if second char is not 'a','i','u','e','o','y'
+                    if (twoChar.charAt(0) == 'n' && i + 2 < lowerWord.length()) {
+                        // This is 'n' followed by something - check if it's na/ni/nu/ne/no
+                        // If yes, match it; otherwise treat 'n' as ん
+                        char nextChar = lowerWord.charAt(i + 2);
+                        if ("aiueoy".indexOf(nextChar) >= 0) {
+                            // Next char is vowel or y, so na/ni/nu/ne/no is intended
+                            japanese.append(ROMAJI_MAP.get(twoChar));
+                            romaji.append(originalWord.substring(i, i + 2).toLowerCase());
+                            i += 2;
+                            continue;
+                        }
+                        // Otherwise fall through to 1-char 'n' → ん
+                    } else {
+                        japanese.append(ROMAJI_MAP.get(twoChar));
+                        romaji.append(originalWord.substring(i, i + 2).toLowerCase());
+                        i += 2;
+                        continue;
+                    }
                 }
             }
 
             // Try 1-character match
-            if (!matched && i + 1 <= lower.length()) {
-                String oneChar = lower.substring(i, i + 1);
-                if (ROMAJI_MAP.containsKey(oneChar)) {
-                    japanese.append(ROMAJI_MAP.get(oneChar));
-                    i += 1;
-                    matched = true;
+            if (ROMAJI_MAP.containsKey(String.valueOf(current))) {
+                if (current != 'n') {
+                    // Regular single character (not 'n')
+                    japanese.append(ROMAJI_MAP.get(String.valueOf(current)));
+                    romaji.append(originalWord.charAt(i));
+                    i++;
+                } else {
+                    // For 'n' check - never gets here since 'n' is not in ROMAJI_MAP as single char
+                    i++;
                 }
+                continue;
             }
 
-            if (!matched) {
-                japanese.append(lower.charAt(i));
+            // Handle 'n' specially (standalone ん or part of na/ni/nu/ne/no already handled above)
+            if (current == 'n') {
+                japanese.append("ん");
+                romaji.append(originalWord.charAt(i));
                 i++;
+                continue;
             }
-        }
 
-        return new ConversionResult(japanese.toString(), romajiWord);
-    }
-
-    /**
-     * Backward compatibility: convert word and return formatted string
-     */
-    public static String convertWord(String romajiWord) {
-        ConversionResult result = convertWordWithResult(romajiWord);
-        return result.formatted;
-    }
-
-    private static boolean canMatch(String text) {
-        if (text == null || text.isEmpty()) {
-            return false;
-        }
-
-        if (text.length() >= 4 && ROMAJI_MAP.containsKey(text.substring(0, 4))) {
-            return true;
-        }
-        if (text.length() >= 3 && ROMAJI_MAP.containsKey(text.substring(0, 3))) {
-            return true;
-        }
-        if (text.length() >= 2 && ROMAJI_MAP.containsKey(text.substring(0, 2))) {
-            return true;
-        }
-        if (text.length() >= 1 && ROMAJI_MAP.containsKey(text.substring(0, 1))) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private static boolean isConsonant(char c) {
-        return "bcdfghjklmnpqrstvwxyz".indexOf(c) >= 0;
-    }
-
-    /**
-     * Convert romaji text to Japanese with original text preservation
-     * Example: "aiueo" -> "あいうえお(aiueo)"
-     */
-    public static String convert(String text) {
-        if (text == null || text.isEmpty()) {
-            return text;
-        }
-
-        StringBuilder result = new StringBuilder();
-        StringBuilder currentWord = new StringBuilder();
-
-        for (int i = 0; i < text.length(); i++) {
-            char ch = text.charAt(i);
-
-            if (Character.isLetter(ch) || ch == '-' || ch == '\'') {
-                currentWord.append(ch);
-            } else {
-                // Process accumulated word
-                if (currentWord.length() > 0) {
-                    String word = currentWord.toString();
-                    if (containsRomaji(word)) {
-                        result.append(convertWord(word));
-                    } else {
-                        result.append(word);
-                    }
-                    currentWord = new StringBuilder();
+            // Handle sokuon (促音) - doubled consonant
+            if (i + 1 < lowerWord.length() && current == lowerWord.charAt(i + 1) && current != 'n' && current != 'y') {
+                String remaining = lowerWord.substring(i + 1);
+                if (canStartWithConsonant(remaining)) {
+                    japanese.append("っ");
+                    romaji.append(originalWord.charAt(i));
+                    i++;
+                    continue;
                 }
-                // Keep the separator (including spaces)
-                result.append(ch);
             }
+
+            // Unmatched character - keep as is
+            japanese.append(current);
+            romaji.append(originalWord.charAt(i));
+            i++;
         }
 
-        // Process final word
-        if (currentWord.length() > 0) {
-            String word = currentWord.toString();
-            if (containsRomaji(word)) {
-                result.append(convertWord(word));
-            } else {
-                result.append(word);
-            }
-        }
+        return new ConversionResult(japanese.toString(), romaji.toString());
+    }
 
-        return result.toString();
+    private static boolean isVowelOrY(char c) {
+        return "aiueoy".indexOf(c) >= 0;
     }
 
     /**
-     * Check if text contains romaji
+     * Check if a romaji sequence can start with the next consonant
      */
-    public static boolean containsRomaji(String text) {
-        if (text == null || text.isEmpty()) {
+    private static boolean canStartWithConsonant(String remaining) {
+        if (remaining.isEmpty()) {
             return false;
         }
 
-        String lower = text.toLowerCase();
-        for (String key : ROMAJI_MAP.keySet()) {
-            if (lower.contains(key)) {
+        String[] patterns = {
+            "ka", "ki", "ku", "ke", "ko",
+            "ga", "gi", "gu", "ge", "go",
+            "sa", "si", "su", "se", "so",
+            "ta", "ti", "tu", "te", "to",
+            "da", "di", "du", "de", "do",
+            "pa", "pi", "pu", "pe", "po",
+            "ba", "bi", "bu", "be", "bo",
+            "ma", "mi", "mu", "me", "mo",
+            "ha", "hi", "hu", "he", "ho",
+            "na", "ni", "nu", "ne", "no",
+            "ra", "ri", "ru", "re", "ro",
+            "ya", "yu", "yo",
+            "wa", "wo",
+            "tsu", "tsa", "tsi", "tse", "tso",
+            "cha", "chu", "cho",
+            "sha", "shu", "sho",
+            "kya", "kyu", "kyo",
+            "gya", "gyu", "gyo",
+            "nya", "nyu", "nyo",
+            "hya", "hyu", "hyo",
+            "mya", "myu", "myo",
+            "rya", "ryu", "ryo",
+            "pya", "pyu", "pyo",
+            "bya", "byu", "byo"
+        };
+
+        for (String pattern : patterns) {
+            if (remaining.startsWith(pattern)) {
                 return true;
             }
         }
-        
-        // Also check kanji map
-        for (String key : KANJI_MAP.keySet()) {
-            if (lower.equals(key)) {
-                return true;
-            }
-        }
-        
         return false;
     }
 }

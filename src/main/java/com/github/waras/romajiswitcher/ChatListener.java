@@ -32,7 +32,7 @@ public class ChatListener implements Listener {
         Component message = event.message();
         String text = getTextFromComponent(message);
 
-        if (text == null || text.isEmpty() || !RomajiConverter.containsRomaji(text)) {
+        if (text == null || text.isEmpty()) {
             return;
         }
 
@@ -66,15 +66,16 @@ public class ChatListener implements Listener {
                 // Process accumulated word
                 if (currentWord.length() > 0) {
                     String word = currentWord.toString();
-                    if (RomajiConverter.containsRomaji(word)) {
-                        RomajiConverter.ConversionResult convResult = RomajiConverter.convertWordWithResult(word);
-                        
+                    RomajiConverter.ConversionResult convResult = RomajiConverter.convertWord(word);
+                    
+                    // Only color if conversion happened (Japanese text is different from original)
+                    if (!convResult.japanese.equals(word)) {
                         // Japanese part with color
                         Component japaneseComponent = Component.text(convResult.japanese)
                             .color(japaneseColor);
                         
                         // Romaji part with color (inside parentheses)
-                        Component romajiComponent = Component.text("(" + convResult.original + ")")
+                        Component romajiComponent = Component.text("(" + convResult.originalRomaji + ")")
                             .color(romajiColor);
                         
                         componentResult = componentResult.append(japaneseComponent).append(romajiComponent);
@@ -90,12 +91,12 @@ public class ChatListener implements Listener {
         // Process final word
         if (currentWord.length() > 0) {
             String word = currentWord.toString();
-            if (RomajiConverter.containsRomaji(word)) {
-                RomajiConverter.ConversionResult convResult = RomajiConverter.convertWordWithResult(word);
-                
+            RomajiConverter.ConversionResult convResult = RomajiConverter.convertWord(word);
+            
+            if (!convResult.japanese.equals(word)) {
                 Component japaneseComponent = Component.text(convResult.japanese)
                     .color(japaneseColor);
-                Component romajiComponent = Component.text("(" + convResult.original + ")")
+                Component romajiComponent = Component.text("(" + convResult.originalRomaji + ")")
                     .color(romajiColor);
                 
                 componentResult = componentResult.append(japaneseComponent).append(romajiComponent);
