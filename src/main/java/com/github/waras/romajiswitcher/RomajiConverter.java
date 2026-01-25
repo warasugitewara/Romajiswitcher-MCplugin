@@ -33,6 +33,8 @@ public class RomajiConverter {
         ROMAJI_MAP.put("xyo", "ょ");
         ROMAJI_MAP.put("lwa", "ゎ");
         ROMAJI_MAP.put("xwa", "ゎ");
+        ROMAJI_MAP.put("ltu", "っ");
+        ROMAJI_MAP.put("xtu", "っ");
         ROMAJI_MAP.put("la", "ぁ");
         ROMAJI_MAP.put("li", "ぃ");
         ROMAJI_MAP.put("lu", "ぅ");
@@ -68,6 +70,12 @@ public class RomajiConverter {
         ROMAJI_MAP.put("dya", "ぢゃ");
         ROMAJI_MAP.put("dyu", "ぢゅ");
         ROMAJI_MAP.put("dyo", "ぢょ");
+        ROMAJI_MAP.put("jya", "じゃ");
+        ROMAJI_MAP.put("jyu", "じゅ");
+        ROMAJI_MAP.put("jyo", "じょ");
+        ROMAJI_MAP.put("zya", "じゃ");
+        ROMAJI_MAP.put("zyu", "じゅ");
+        ROMAJI_MAP.put("zyo", "じょ");
         ROMAJI_MAP.put("nya", "にゃ");
         ROMAJI_MAP.put("nyu", "にゅ");
         ROMAJI_MAP.put("nyo", "にょ");
@@ -95,6 +103,9 @@ public class RomajiConverter {
         ROMAJI_MAP.put("tso", "つぉ");
         ROMAJI_MAP.put("dzi", "ぢ");
         ROMAJI_MAP.put("dze", "ぢぇ");
+        ROMAJI_MAP.put("ju", "じゅ");
+        ROMAJI_MAP.put("zi", "じ");
+        ROMAJI_MAP.put("ze", "ぜ");
 
         // Basic consonants (2-char)
         ROMAJI_MAP.put("ka", "か");
@@ -450,5 +461,33 @@ public class RomajiConverter {
             }
         }
         return false;
+    }
+
+    /**
+     * Add a custom kanji entry to the dictionary
+     */
+    public static void addKanjiEntry(String romaji, String kanji) {
+        KANJI_MAP.put(romaji.toLowerCase(), kanji);
+    }
+
+    /**
+     * Remove a kanji entry from the dictionary
+     */
+    public static boolean removeKanjiEntry(String romaji) {
+        return KANJI_MAP.remove(romaji.toLowerCase()) != null;
+    }
+
+    /**
+     * Get all kanji entries
+     */
+    public static Map<String, String> getKanjiEntries() {
+        return new HashMap<>(KANJI_MAP);
+    }
+
+    /**
+     * Get a specific kanji entry
+     */
+    public static String getKanjiEntry(String romaji) {
+        return KANJI_MAP.get(romaji.toLowerCase());
     }
 }

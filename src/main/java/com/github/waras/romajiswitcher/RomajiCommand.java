@@ -5,15 +5,21 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Handles /romaji command
  * Usage:
  *   /romaji - Toggle on/off
  *   /romaji color <color1> <color2> - Set colors
+ *   /romaji dictionary add <romaji> <kanji> - Add dictionary entry
+ *   /romaji dictionary del <romaji> - Delete dictionary entry
+ *   /romaji dictionary list [page] - List dictionary entries
  */
 public class RomajiCommand implements CommandExecutor {
     private final UserPreferences preferences;
+    private static final int ENTRIES_PER_PAGE = 10;
 
     public RomajiCommand(UserPreferences preferences) {
         this.preferences = preferences;
@@ -23,12 +29,12 @@ public class RomajiCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§cThis command can only be used by players");
+            sender.sendMessage("§cこのコマンドはプレイヤーのみ使用できます");
             return true;
         }
 
         if (!player.hasPermission("romajiswitcher.use")) {
-            player.sendMessage("§cYou don't have permission to use this command");
+            player.sendMessage("§cこのコマンドを使用する権限がありません");
             return true;
         }
 
@@ -39,49 +45,163 @@ public class RomajiCommand implements CommandExecutor {
             boolean enabled = preferences.isEnabled(player.getUniqueId());
 
             if (enabled) {
-                player.sendMessage("§a✔ Romaji conversion is now §2enabled§a!");
-                player.sendMessage("§7Your messages will be converted from romaji to Japanese.");
+                player.sendMessage("§a✔ ローマ字変換が有効になりました");
+                player.sendMessage("§7メッセージがローマ字から日本語に変換されます");
             } else {
-                player.sendMessage("§c✘ Romaji conversion is now §4disabled§c!");
-                player.sendMessage("§7Your messages will no longer be converted.");
+                player.sendMessage("§c✘ ローマ字変換が無効になりました");
+                player.sendMessage("§7メッセージは変換されなくなります");
             }
             return true;
         }
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("color")) {
-            if (args.length < 3) {
-                player.sendMessage("§c使用方法: /romaji color <japanese_color> <romaji_color>");
-                player.sendMessage("§7利用可能な色: " + String.join(", ", ColorManager.getAvailableColors()));
-                return true;
-            }
+            return handleColorCommand(player, args);
+        }
 
-            String japaneseColor = args[1];
-            String romajiColor = args[2];
-
-            if (!ColorManager.isValidColor(japaneseColor)) {
-                player.sendMessage("§c無効な色です: " + japaneseColor);
-                player.sendMessage("§7利用可能な色: " + String.join(", ", ColorManager.getAvailableColors()));
-                return true;
-            }
-
-            if (!ColorManager.isValidColor(romajiColor)) {
-                player.sendMessage("§c無効な色です: " + romajiColor);
-                player.sendMessage("§7利用可能な色: " + String.join(", ", ColorManager.getAvailableColors()));
-                return true;
-            }
-
-            preferences.setColors(player.getUniqueId(), japaneseColor, romajiColor);
-            player.sendMessage("§a✔ Color preferences updated!");
-            player.sendMessage("§e日本語色: §r" + japaneseColor);
-            player.sendMessage("§eローマ字色: §r" + romajiColor);
-            return true;
+        if (args.length >= 1 && args[0].equalsIgnoreCase("dictionary")) {
+            return handleDictionaryCommand(player, args);
         }
 
         // Unknown sub-command
         player.sendMessage("§c未知のサブコマンド: " + args[0]);
         player.sendMessage("§7使用方法:");
         player.sendMessage("§e  /romaji - 変換ON/OFF");
-        player.sendMessage("§e  /romaji color <japanese_color> <romaji_color> - 色設定");
+        player.sendMessage("§e  /romaji color <色1> <色2> - 色設定");
+        player.sendMessage("§e  /romaji dictionary add <ローマ字> <漢字> - 辞書に追加");
+        player.sendMessage("§e  /romaji dictionary del <ローマ字> - 辞書から削除");
+        player.sendMessage("§e  /romaji dictionary list [ページ] - 辞書一覧");
+        return true;
+    }
+
+    private boolean handleColorCommand(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage("§c使用方法: /romaji color <日本語色> <ローマ字色>");
+            player.sendMessage("§7利用可能な色: " + String.join(", ", ColorManager.getAvailableColors()));
+            return true;
+        }
+
+        String japaneseColor = args[1];
+        String romajiColor = args[2];
+
+        if (!ColorManager.isValidColor(japaneseColor)) {
+            player.sendMessage("§c無効な色です: " + japaneseColor);
+            player.sendMessage("§7利用可能な色: " + String.join(", ", ColorManager.getAvailableColors()));
+            return true;
+        }
+
+        if (!ColorManager.isValidColor(romajiColor)) {
+            player.sendMessage("§c無効な色です: " + romajiColor);
+            player.sendMessage("§7利用可能な色: " + String.join(", ", ColorManager.getAvailableColors()));
+            return true;
+        }
+
+        preferences.setColors(player.getUniqueId(), japaneseColor, romajiColor);
+        player.sendMessage("§a✔ 色設定が更新されました");
+        player.sendMessage("§e日本語色: §r" + japaneseColor);
+        player.sendMessage("§eローマ字色: §r" + romajiColor);
+        return true;
+    }
+
+    private boolean handleDictionaryCommand(Player player, String[] args) {
+        if (args.length < 2) {
+            player.sendMessage("§c使用方法:");
+            player.sendMessage("§e  /romaji dictionary add <ローマ字> <漢字>");
+            player.sendMessage("§e  /romaji dictionary del <ローマ字>");
+            player.sendMessage("§e  /romaji dictionary list [ページ]");
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+
+        if (action.equals("add")) {
+            return handleDictionaryAdd(player, args);
+        } else if (action.equals("del")) {
+            return handleDictionaryDel(player, args);
+        } else if (action.equals("list")) {
+            return handleDictionaryList(player, args);
+        } else {
+            player.sendMessage("§c不明なアクション: " + action);
+            return true;
+        }
+    }
+
+    private boolean handleDictionaryAdd(Player player, String[] args) {
+        if (!player.hasPermission("romajiswitcher.admin")) {
+            player.sendMessage("§cこのコマンドを使用する権限がありません");
+            return true;
+        }
+
+        if (args.length < 4) {
+            player.sendMessage("§c使用方法: /romaji dictionary add <ローマ字> <漢字>");
+            return true;
+        }
+
+        String romaji = args[2].toLowerCase();
+        String kanji = args[3];
+
+        RomajiConverter.addKanjiEntry(romaji, kanji);
+        player.sendMessage("§a✔ 辞書に追加しました");
+        player.sendMessage("§e" + romaji + " → " + kanji);
+        return true;
+    }
+
+    private boolean handleDictionaryDel(Player player, String[] args) {
+        if (!player.hasPermission("romajiswitcher.admin")) {
+            player.sendMessage("§cこのコマンドを使用する権限がありません");
+            return true;
+        }
+
+        if (args.length < 3) {
+            player.sendMessage("§c使用方法: /romaji dictionary del <ローマ字>");
+            return true;
+        }
+
+        String romaji = args[2].toLowerCase();
+
+        if (RomajiConverter.removeKanjiEntry(romaji)) {
+            player.sendMessage("§a✔ 辞書から削除しました: " + romaji);
+        } else {
+            player.sendMessage("§c辞書に見つかりません: " + romaji);
+        }
+        return true;
+    }
+
+    private boolean handleDictionaryList(Player player, String[] args) {
+        Map<String, String> entries = RomajiConverter.getKanjiEntries();
+        
+        if (entries.isEmpty()) {
+            player.sendMessage("§c辞書は空です");
+            return true;
+        }
+
+        int page = 1;
+        if (args.length >= 3) {
+            try {
+                page = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e) {
+                player.sendMessage("§cページ番号が無効です");
+                return true;
+            }
+        }
+
+        int totalPages = (int) Math.ceil((double) entries.size() / ENTRIES_PER_PAGE);
+        if (page < 1 || page > totalPages) {
+            player.sendMessage("§cページ " + page + " は存在しません（全 " + totalPages + " ページ）");
+            return true;
+        }
+
+        player.sendMessage("§e========== 辞書一覧 (" + page + "/" + totalPages + ") ==========");
+
+        int start = (page - 1) * ENTRIES_PER_PAGE;
+        int end = Math.min(start + ENTRIES_PER_PAGE, entries.size());
+
+        entries.entrySet().stream()
+                .skip(start)
+                .limit(ENTRIES_PER_PAGE)
+                .forEach(e -> player.sendMessage("§7" + e.getKey() + " §f→ §b" + e.getValue()));
+
+        player.sendMessage("§e=====================================");
         return true;
     }
 }
+
