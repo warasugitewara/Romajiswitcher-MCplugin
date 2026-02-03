@@ -95,6 +95,14 @@ public class RomajiConverter {
         ROMAJI_MAP.put("ryu", "りゅ");
         ROMAJI_MAP.put("ryo", "りょ");
 
+        // nn pattern and nn + vowel combinations (3-char priority)
+        // These ensure that nna/nni/nnu/nne/nno are parsed as ん + na/ni/nu/ne/no
+        ROMAJI_MAP.put("nna", "んな");
+        ROMAJI_MAP.put("nni", "んに");
+        ROMAJI_MAP.put("nnu", "んぬ");
+        ROMAJI_MAP.put("nne", "んね");
+        ROMAJI_MAP.put("nno", "んの");
+
         // Special Kunrei variants (3-char)
         ROMAJI_MAP.put("tsa", "つぁ");
         ROMAJI_MAP.put("tse", "つぇ");
@@ -175,6 +183,7 @@ public class RomajiConverter {
         ROMAJI_MAP.put("wi", "ゐ");
         ROMAJI_MAP.put("we", "ゑ");
         ROMAJI_MAP.put("wo", "を");
+        ROMAJI_MAP.put("nn", "ん");
 
         // Vowels (1-char)
         ROMAJI_MAP.put("a", "あ");
