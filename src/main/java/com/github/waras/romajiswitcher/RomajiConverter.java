@@ -352,20 +352,32 @@ public class RomajiConverter {
             if (i + 2 <= lowerWord.length()) {
                 String twoChar = lowerWord.substring(i, i + 2);
                 if (ROMAJI_MAP.containsKey(twoChar)) {
-                    // Special handling for 'n': only match if second char is not 'a','i','u','e','o','y'
-                    if (twoChar.charAt(0) == 'n' && i + 2 < lowerWord.length()) {
-                        // This is 'n' followed by something - check if it's na/ni/nu/ne/no
-                        // If yes, match it; otherwise treat 'n' as ん
-                        char nextChar = lowerWord.charAt(i + 2);
-                        if ("aiueoy".indexOf(nextChar) >= 0) {
-                            // Next char is vowel or y, so na/ni/nu/ne/no is intended
+                    // Special handling for 'n' + vowel/y: only match if NOT followed by another vowel/y
+                    // This distinguishes between "na" (な) and "n" + vowel (ん + vowel)
+                    if (twoChar.charAt(0) == 'n' && "aiueoy".indexOf(twoChar.charAt(1)) >= 0) {
+                        // This is n + vowel (na/ni/nu/ne/no)
+                        // Check if next char exists and is NOT a vowel/y (which would make it standalone n)
+                        if (i + 2 < lowerWord.length()) {
+                            char nextChar = lowerWord.charAt(i + 2);
+                            if ("aiueoy".indexOf(nextChar) >= 0) {
+                                // Next char is vowel/y, so this n is standalone (ん)
+                                // Fall through to handle single 'n'
+                            } else {
+                                // Next char is consonant or nothing, so na/ni/nu/ne/no is intended
+                                japanese.append(ROMAJI_MAP.get(twoChar));
+                                romaji.append(originalWord.substring(i, i + 2).toLowerCase());
+                                i += 2;
+                                continue;
+                            }
+                        } else {
+                            // End of word, so na/ni/nu/ne/no is intended
                             japanese.append(ROMAJI_MAP.get(twoChar));
                             romaji.append(originalWord.substring(i, i + 2).toLowerCase());
                             i += 2;
                             continue;
                         }
-                        // Otherwise fall through to 1-char 'n' → ん
                     } else {
+                        // Not n + vowel, match normally
                         japanese.append(ROMAJI_MAP.get(twoChar));
                         romaji.append(originalWord.substring(i, i + 2).toLowerCase());
                         i += 2;
