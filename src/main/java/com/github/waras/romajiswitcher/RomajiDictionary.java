@@ -38,6 +38,7 @@ public class RomajiDictionary {
      */
     private void loadIPADICDictionary() {
         try {
+            // Try to load IPADIC resource if available
             InputStream inputStream = RomajiDictionary.class.getClassLoader()
                     .getResourceAsStream(IPADIC_RESOURCE);
             
@@ -45,7 +46,7 @@ public class RomajiDictionary {
                 parseIPADICJSON(inputStream);
                 System.out.println("IPADIC dictionary loaded: " + dictionary.size() + " entries");
             } else {
-                System.out.println("IPADIC resource not found, loading fallback dictionary");
+                System.out.println("No IPADIC resource found, using fallback dictionary");
                 loadFallbackDictionary();
             }
         } catch (Exception e) {
@@ -100,14 +101,15 @@ public class RomajiDictionary {
     }
 
     /**
-     * Load fallback dictionary with common entries
+     * Load fallback dictionary with minimal common entries
      */
     private void loadFallbackDictionary() {
-        // Basic fallback entries for testing and minimal functionality
+        // Minimal fallback entries for testing and basic functionality
+        // Users should register their own entries via /romaji dictionary
+        
         addEntry("arigatou", 
             Arrays.asList(
-                new ConversionCandidate("有難う", "ありがとう", 100),
-                new ConversionCandidate("ありがとう", "ありがとう", 80)
+                new ConversionCandidate("ありがとう", "ありがとう", 100)
             ), 0);
         
         addEntry("konnichiwa",
@@ -120,17 +122,7 @@ public class RomajiDictionary {
                 new ConversionCandidate("さようなら", "さようなら", 100)
             ), 0);
         
-        addEntry("sugoi",
-            Arrays.asList(
-                new ConversionCandidate("凄い", "すごい", 90),
-                new ConversionCandidate("すごい", "すごい", 70)
-            ), 0);
-        
-        addEntry("kawaii",
-            Arrays.asList(
-                new ConversionCandidate("可愛い", "かわいい", 100),
-                new ConversionCandidate("かわいい", "かわいい", 70)
-            ), 0);
+        System.out.println("Fallback dictionary loaded: " + dictionary.size() + " entries");
     }
 
     /**
