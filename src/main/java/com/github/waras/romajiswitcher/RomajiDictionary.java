@@ -16,6 +16,7 @@ public class RomajiDictionary {
     private final Map<String, DictionaryEntry> dictionary;
     private final ConversionStats stats;
     private final Path dictionaryPath;
+    private final GoogleIMEClient googleIME;
     private static final String USER_DICT_FILENAME = "user-dictionary.json";
     private static final String IPADIC_RESOURCE = "ipadic-subset.json";
     
@@ -27,6 +28,7 @@ public class RomajiDictionary {
         this.dictionary = new ConcurrentHashMap<>();
         this.stats = stats;
         this.dictionaryPath = pluginDataFolder.resolve(USER_DICT_FILENAME);
+        this.googleIME = new GoogleIMEClient();
         
         // Load dictionaries
         loadIPADICDictionary();
@@ -233,6 +235,7 @@ public class RomajiDictionary {
 
     /**
      * Get the best conversion candidate for a romaji input
+     * Uses IPADIC first, then tries Google IME API for better kanji conversion
      */
     public ConversionCandidate getBestCandidate(String romaji) {
         if (romaji == null || romaji.isEmpty()) {
@@ -247,6 +250,15 @@ public class RomajiDictionary {
         }
 
         ConversionCandidate best = entry.getBestCandidate(stats);
+        
+        // Try to enhance with Google IME API if available
+        if (best != null && best.hiragana != null) {
+            String enhancedKanji = googleIME.convert(best.hiragana);
+            // If Google IME provided a different result, use it
+            if (enhancedKanji != null && !enhancedKanji.equals(best.hiragana)) {
+                best = new ConversionCandidate(enhancedKanji, best.hiragana, best.baseScore);
+            }
+        }
         
         // Record usage
         if (best != null) {
