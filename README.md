@@ -391,4 +391,3 @@ For questions or issues:
 ---
 
 **Last Updated**: February 5, 2026  
-**Repository**: https://github.com/waras/RomajiSwitcher
