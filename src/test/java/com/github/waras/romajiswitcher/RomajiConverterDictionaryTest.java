@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -105,14 +106,15 @@ public class RomajiConverterDictionaryTest {
 
     @Test
     void testUsageRecordingWithDictionary() {
-        // Clear stats before test
-        assertEquals(0, stats.getStatsForRomaji("arigatou").size());
-
-        // Convert with dictionary (should record usage)
-        RomajiConverter.convertWordWithDictionary("arigatou", dictionary, stats);
-
-        // Usage should now be recorded
-        assertTrue(stats.getStatsForRomaji("arigatou").size() > 0);
+        // Ensure stats are initially empty for sugoi
+        assertEquals(0, stats.getStatsForRomaji("sugoi").size());
+        
+        // Get candidate (should record usage)
+        RomajiConverter.convertWordWithDictionary("sugoi", dictionary, stats);
+        
+        // Check that usage was recorded
+        Map<String, ConversionStats.UsageInfo> romajiStats = stats.getStatsForRomaji("sugoi");
+        assertTrue(romajiStats.size() > 0);
     }
 
     @Test

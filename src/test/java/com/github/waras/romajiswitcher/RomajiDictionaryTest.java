@@ -27,26 +27,25 @@ public class RomajiDictionaryTest {
     @Test
     void testDictionaryInitialization() {
         assertNotNull(dictionary);
-        // Fallback dictionary should have minimal entries
-        assertTrue(dictionary.size() >= 3);
+        // IPADIC should have loaded entries
+        assertTrue(dictionary.size() >= 15);
         System.out.println("Dictionary size: " + dictionary.size());
     }
 
     @Test
     void testFallbackDictionaryEntries() {
-        // Check that fallback entries exist
-        assertTrue(dictionary.contains("arigatou"));
-        assertTrue(dictionary.contains("konnichiwa"));
-        assertTrue(dictionary.contains("sayounara"));
+        // Check that IPADIC entries are loaded
+        assertTrue(dictionary.contains("sugoi"));  // すごい (凄い)
+        assertTrue(dictionary.contains("kawaii")); // かわいい (可愛い)
+        assertTrue(dictionary.contains("atarashii")); // あたらしい (新しい)
     }
 
     @Test
     void testGetBestCandidate() {
-        ConversionCandidate candidate = dictionary.getBestCandidate("arigatou");
+        ConversionCandidate candidate = dictionary.getBestCandidate("sugoi");
         
         assertNotNull(candidate);
-        // Fallback uses hiragana only
-        assertEquals("ありがとう", candidate.kanji);
+        assertEquals("凄い", candidate.kanji);
     }
 
     @Test
@@ -126,15 +125,15 @@ public class RomajiDictionaryTest {
 
     @Test
     void testMultipleCandidateScoring() {
-        // Register a test entry with multiple uses to build up statistics
+        // Register a test entry with multiple uses
         for (int i = 0; i < 5; i++) {
-            dictionary.getBestCandidate("arigatou");
+            dictionary.getBestCandidate("sugoi");
         }
         
         // Best candidate should still be selected
-        ConversionCandidate best = dictionary.getBestCandidate("arigatou");
+        ConversionCandidate best = dictionary.getBestCandidate("sugoi");
         assertNotNull(best);
-        assertEquals("ありがとう", best.kanji);
+        assertEquals("凄い", best.kanji);
     }
 
     @Test
