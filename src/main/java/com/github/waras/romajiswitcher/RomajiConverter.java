@@ -532,4 +532,70 @@ public class RomajiConverter {
         }
         return false;
     }
+
+    /**
+     * Convert a single word using the new dictionary-based system.
+     * This method uses RomajiDictionary for intelligent multi-candidate conversion.
+     * Fallback: If dictionary is not available, uses the original convertWord method.
+     */
+    public static ConversionResult convertWordWithDictionary(String word, RomajiDictionary dictionary, ConversionStats stats) {
+        if (word == null || word.isEmpty()) {
+            return new ConversionResult("", "");
+        }
+
+        if (dictionary == null) {
+            // Fallback to original system if dictionary not available
+            return convertWord(word);
+        }
+
+        String lowerWord = word.toLowerCase();
+
+        // Get the best candidate from the dictionary
+        ConversionCandidate candidate = dictionary.getBestCandidate(lowerWord);
+
+        if (candidate != null) {
+            // Use the best representation from the candidate
+            String japaneseText = candidate.getBestRepresentation();
+            return new ConversionResult(japaneseText, word);
+        }
+
+        // Fallback to original system if no dictionary entry found
+        return convertWord(word);
+    }
+
+    /**
+     * Convert text using the new dictionary-based system
+     */
+    public static ConversionResult convertWithDictionary(String input, RomajiDictionary dictionary, ConversionStats stats) {
+        if (input == null || input.isEmpty()) {
+            return new ConversionResult("", "");
+        }
+
+        if (dictionary == null) {
+            // Fallback to original system if dictionary not available
+            return convert(input);
+        }
+
+        StringBuilder japaneseText = new StringBuilder();
+        StringBuilder originalText = new StringBuilder();
+
+        String[] words = input.split("(?=\\s)|(?<=\\s)");
+
+        for (String word : words) {
+            if (word.isEmpty()) {
+                continue;
+            }
+
+            if (word.charAt(0) == ' ') {
+                japaneseText.append(' ');
+                originalText.append(' ');
+            } else {
+                ConversionResult wordResult = convertWordWithDictionary(word, dictionary, stats);
+                japaneseText.append(wordResult.japanese);
+                originalText.append(wordResult.originalRomaji);
+            }
+        }
+
+        return new ConversionResult(japaneseText.toString(), originalText.toString());
+    }
 }
