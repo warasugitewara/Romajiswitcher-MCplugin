@@ -50,5 +50,31 @@ public class RomajiConverterTest {
         RomajiConverter.ConversionResult result = RomajiConverter.convertWord("n");
         assertEquals("ん", result.japanese);
     }
+
+    @Test
+    public void testContainsFullWidthJapaneseWithKanji() {
+        assertTrue(RomajiConverter.containsFullWidthJapanese("俺今日valoするからゲームできん"));
+    }
+
+    @Test
+    public void testContainsFullWidthJapaneseWithHiragana() {
+        assertTrue(RomajiConverter.containsFullWidthJapanese("これはひらがなです"));
+    }
+
+    @Test
+    public void testContainsFullWidthJapaneseWithKatakana() {
+        assertTrue(RomajiConverter.containsFullWidthJapanese("これはカタカナです"));
+    }
+
+    @Test
+    public void testDoesNotContainFullWidthJapanese() {
+        assertFalse(RomajiConverter.containsFullWidthJapanese("hello world"));
+        assertFalse(RomajiConverter.containsFullWidthJapanese("romaji text"));
+    }
+
+    @Test
+    public void testContainsFullWidthJapaneseMixed() {
+        assertTrue(RomajiConverter.containsFullWidthJapanese("mix 日本語 and romaji"));
+    }
 }
 

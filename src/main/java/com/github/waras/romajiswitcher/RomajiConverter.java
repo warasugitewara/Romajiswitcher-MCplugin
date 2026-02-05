@@ -511,4 +511,25 @@ public class RomajiConverter {
     public static String getKanjiEntry(String romaji) {
         return KANJI_MAP.get(romaji.toLowerCase());
     }
+
+    /**
+     * Check if text contains full-width Japanese characters (kanji, hiragana, katakana)
+     */
+    public static boolean containsFullWidthJapanese(String text) {
+        if (text == null || text.isEmpty()) {
+            return false;
+        }
+        
+        for (char c : text.toCharArray()) {
+            // Kanji: U+4E00 ~ U+9FFF
+            // Hiragana: U+3040 ~ U+309F
+            // Katakana: U+30A0 ~ U+30FF
+            if ((c >= 0x4E00 && c <= 0x9FFF) ||
+                (c >= 0x3040 && c <= 0x309F) ||
+                (c >= 0x30A0 && c <= 0x30FF)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

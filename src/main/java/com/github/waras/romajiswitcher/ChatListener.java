@@ -36,6 +36,11 @@ public class ChatListener implements Listener {
             return;
         }
 
+        // Skip conversion if text contains full-width Japanese characters
+        if (RomajiConverter.containsFullWidthJapanese(text)) {
+            return;
+        }
+
         // Convert romaji to Japanese with colors
         Component converted = convertWithColors(text, player.getUniqueId());
 
