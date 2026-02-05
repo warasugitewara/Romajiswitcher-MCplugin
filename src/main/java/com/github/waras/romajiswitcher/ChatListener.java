@@ -15,9 +15,25 @@ import org.bukkit.event.Listener;
  */
 public class ChatListener implements Listener {
     private final UserPreferences preferences;
+    private final RomajiDictionary dictionary;
+    private final ConversionStats stats;
 
+    /**
+     * Constructor with only preferences (backward compatible)
+     */
     public ChatListener(UserPreferences preferences) {
         this.preferences = preferences;
+        this.dictionary = null;
+        this.stats = null;
+    }
+
+    /**
+     * Constructor with dictionary and stats (new system)
+     */
+    public ChatListener(UserPreferences preferences, RomajiDictionary dictionary, ConversionStats stats) {
+        this.preferences = preferences;
+        this.dictionary = dictionary;
+        this.stats = stats;
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -41,8 +57,15 @@ public class ChatListener implements Listener {
             return;
         }
 
-        // Convert romaji to Japanese with colors
-        Component converted = convertWithColors(text, player.getUniqueId());
+        // Choose conversion method based on availability
+        Component converted;
+        if (dictionary != null && stats != null) {
+            // Use new dictionary-based system
+            converted = convertWithColorsDictionary(text, player.getUniqueId());
+        } else {
+            // Use original system (backward compatible)
+            converted = convertWithColors(text, player.getUniqueId());
+        }
 
         if (converted != null && !converted.equals(message)) {
             event.message(converted);
@@ -121,5 +144,70 @@ public class ChatListener implements Listener {
             return textComponent.content();
         }
         return component.toString();
+    }
+
+    /**
+     * Convert text with color support using the new dictionary-based system
+     */
+    private Component convertWithColorsDictionary(String text, java.util.UUID playerId) {
+        // Get user's color preferences
+        String[] colors = preferences.getColors(playerId);
+        NamedTextColor japaneseColor = ColorManager.getColor(colors[0]);
+        NamedTextColor romajiColor = ColorManager.getColor(colors[1]);
+
+        Component componentResult = Component.empty();
+        StringBuilder currentWord = new StringBuilder();
+
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+
+            if (Character.isLetter(ch) || ch == '-' || ch == '\'') {
+                currentWord.append(ch);
+            } else {
+                // Process accumulated word
+                if (currentWord.length() > 0) {
+                    String word = currentWord.toString();
+                    RomajiConverter.ConversionResult convResult = 
+                        RomajiConverter.convertWordWithDictionary(word, dictionary, stats);
+                    
+                    // Only color if conversion happened
+                    if (!convResult.japanese.equals(word)) {
+                        // Japanese part with color
+                        Component japaneseComponent = Component.text(convResult.japanese)
+                            .color(japaneseColor);
+                        
+                        // Romaji part with color
+                        Component romajiComponent = Component.text("(" + convResult.originalRomaji + ")")
+                            .color(romajiColor);
+                        
+                        componentResult = componentResult.append(japaneseComponent).append(romajiComponent);
+                    } else {
+                        componentResult = componentResult.append(Component.text(word));
+                    }
+                    currentWord = new StringBuilder();
+                }
+                componentResult = componentResult.append(Component.text(String.valueOf(ch)));
+            }
+        }
+
+        // Process final word
+        if (currentWord.length() > 0) {
+            String word = currentWord.toString();
+            RomajiConverter.ConversionResult convResult = 
+                RomajiConverter.convertWordWithDictionary(word, dictionary, stats);
+            
+            if (!convResult.japanese.equals(word)) {
+                Component japaneseComponent = Component.text(convResult.japanese)
+                    .color(japaneseColor);
+                Component romajiComponent = Component.text("(" + convResult.originalRomaji + ")")
+                    .color(romajiColor);
+                
+                componentResult = componentResult.append(japaneseComponent).append(romajiComponent);
+            } else {
+                componentResult = componentResult.append(Component.text(word));
+            }
+        }
+
+        return componentResult;
     }
 }
